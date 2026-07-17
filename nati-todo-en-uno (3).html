@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nati · Todo en un lugar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FAF6F2;
+    --bg-alt:#F3ECE6;
+    --card:#FFFFFF;
+    --ink:#2B2230;
+    --ink-soft:#6E6270;
+    --line:#EAE0D8;
+    --rose:#C96B84;
+    --rose-deep:#A8506B;
+    --rose-soft:#F5DEE4;
+    --sage:#82A28E;
+    --sage-soft:#E3ECE5;
+    --gold:#C79A54;
+    --gold-soft:#F3E7D0;
+    --sky1:#F6D9C9;
+    --sky2:#E7C4D1;
+    --sky3:#C7CFE0;
+    --radius:18px;
+    --shadow:0 2px 14px rgba(43,34,48,0.06);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:'Manrope',sans-serif;}
+  #app{max-width:480px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative;padding-bottom:86px;}
+  h1,h2,h3{font-family:'Fraunces',serif;margin:0;font-weight:600;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  button{font-family:inherit;cursor:pointer;}
+  ::-webkit-scrollbar{display:none;}
+
+  /* HEADER */
+  .header{
+    position:relative;
+    padding:28px 20px 22px;
+    overflow:hidden;
+    border-radius:0 0 32px 32px;
+    color:#3A2A33;
+  }
+  .header .glow{
+    position:absolute;inset:-40% -20% auto -20%;height:220px;
+    background:radial-gradient(60% 100% at 30% 0%, var(--sky1) 0%, transparent 70%),
+               radial-gradient(50% 100% at 75% 10%, var(--sky2) 0%, transparent 70%),
+               radial-gradient(60% 100% at 100% 40%, var(--sky3) 0%, transparent 70%);
+    filter:blur(6px);
+    opacity:0.9;
+    z-index:0;
+  }
+  .header-content{position:relative;z-index:1;}
+  .greeting-row{display:flex;justify-content:space-between;align-items:flex-start;}
+  .greeting{font-size:26px;line-height:1.15;}
+  .datestr{font-size:13px;color:var(--ink-soft);margin-top:4px;font-weight:500;}
+  .ring-wrap{position:relative;width:64px;height:64px;flex-shrink:0;}
+  .ring-wrap svg{transform:rotate(-90deg);}
+  .ring-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;font-family:'IBM Plex Mono',monospace;}
+  .chips{display:flex;gap:8px;margin-top:16px;overflow-x:auto;padding-bottom:2px;}
+  .chip{
+    background:rgba(255,255,255,0.65);
+    backdrop-filter:blur(4px);
+    border:1px solid rgba(255,255,255,0.7);
+    border-radius:14px;
+    padding:8px 12px;
+    min-width:76px;
+    flex-shrink:0;
+  }
+  .chip .label{font-size:10px;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-soft);font-weight:700;}
+  .chip .val{font-size:15px;font-weight:700;margin-top:2px;font-family:'IBM Plex Mono',monospace;}
+  .chip button{background:none;border:none;color:var(--rose-deep);font-size:16px;font-weight:800;padding:0 4px;}
+
+  /* TABS CONTENT */
+  .section{padding:18px 20px 4px;}
+  .section-title{font-size:19px;margin-bottom:2px;}
+  .section-sub{font-size:12.5px;color:var(--ink-soft);margin-bottom:14px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px;box-shadow:var(--shadow);}
+  .card-title{font-size:15px;display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+  .card-title .tag{font-size:10.5px;font-weight:700;background:var(--rose-soft);color:var(--rose-deep);padding:3px 8px;border-radius:100px;text-transform:uppercase;letter-spacing:.03em;}
+  .task{display:flex;align-items:flex-start;gap:10px;padding:7px 0;font-size:14px;line-height:1.4;border-bottom:1px solid var(--line);}
+  .task:last-child{border-bottom:none;}
+  .task input[type=checkbox]{margin-top:2px;width:17px;height:17px;accent-color:var(--rose);flex-shrink:0;}
+  .task label{flex:1;}
+  .task.done label{color:var(--ink-soft);text-decoration:line-through;}
+  .pill-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+  .pill{font-size:12px;padding:5px 11px;border-radius:100px;border:1px solid var(--line);background:var(--bg-alt);color:var(--ink-soft);font-weight:600;}
+  .pill.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .btn{background:var(--rose);color:#fff;border:none;border-radius:12px;padding:11px 16px;font-weight:700;font-size:14px;text-align:center;}
+  .btn.secondary{background:var(--bg-alt);color:var(--ink);border:1px solid var(--line);}
+  .btn.sage{background:var(--sage);}
+  .btn.block{width:100%;}
+  .btn.small{padding:7px 12px;font-size:12.5px;border-radius:9px;}
+  .row{display:flex;gap:10px;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .stat-block{background:var(--bg-alt);border-radius:14px;padding:12px;}
+  .stat-block .k{font-size:11px;color:var(--ink-soft);font-weight:700;text-transform:uppercase;}
+  .stat-block .v{font-size:20px;font-weight:700;font-family:'IBM Plex Mono',monospace;margin-top:2px;}
+  .note{font-size:12.5px;color:var(--ink-soft);background:var(--bg-alt);border-radius:10px;padding:9px 11px;margin-top:8px;line-height:1.45;}
+  input[type=text],input[type=date],textarea,select{
+    width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:inherit;font-size:14px;background:#fff;color:var(--ink);
+  }
+  textarea{resize:vertical;min-height:60px;}
+  .list-item{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px;gap:8px;}
+  .list-item:last-child{border-bottom:none;}
+  .del{color:var(--rose-deep);background:none;border:none;font-size:17px;padding:2px 6px;flex-shrink:0;}
+  .empty{text-align:center;padding:28px 10px;color:var(--ink-soft);font-size:13.5px;}
+  .empty .big{font-size:30px;display:block;margin-bottom:6px;}
+
+  /* NAV */
+  .navbar{
+    position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;
+    background:rgba(255,255,255,0.92);backdrop-filter:blur(10px);
+    border-top:1px solid var(--line);
+    display:flex;justify-content:space-around;padding:9px 4px 12px;z-index:50;
+  }
+  .navbtn{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--ink-soft);font-size:10px;font-weight:700;padding:4px 6px;border-radius:10px;}
+  .navbtn .ic{font-size:19px;}
+  .navbtn.active{color:var(--rose-deep);}
+
+  .badge-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .badge{background:var(--bg-alt);border-radius:14px;padding:14px 10px;text-align:center;opacity:0.4;}
+  .badge.unlocked{opacity:1;background:linear-gradient(160deg,var(--gold-soft),var(--card));border:1px solid var(--gold);}
+  .badge .ic{font-size:26px;}
+  .badge .t{font-size:11.5px;font-weight:700;margin-top:4px;}
+
+  .day-picker{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;}
+  .day-btn{flex-shrink:0;border:1px solid var(--line);background:#fff;border-radius:12px;padding:8px 12px;text-align:center;min-width:52px;}
+  .day-btn .d{font-size:10px;color:var(--ink-soft);font-weight:700;text-transform:uppercase;}
+  .day-btn .n{font-size:15px;font-weight:700;font-family:'IBM Plex Mono',monospace;}
+  .day-btn.active{background:var(--ink);border-color:var(--ink);}
+  .day-btn.active .d,.day-btn.active .n{color:#fff;}
+
+  .meal-block{margin-bottom:12px;}
+  .meal-block .hh{font-size:12px;font-weight:700;color:var(--rose-deep);display:flex;justify-content:space-between;}
+  .meal-block .name{font-size:14.5px;font-weight:700;margin:2px 0 4px;}
+  .meal-block ul{margin:0;padding-left:18px;font-size:13px;color:var(--ink-soft);line-height:1.5;}
+
+  .flex-between{display:flex;justify-content:space-between;align-items:center;}
+  .info-banner{background:var(--sage-soft);border:1px solid var(--sage);border-radius:12px;padding:10px 12px;font-size:12px;color:#3E5548;line-height:1.5;margin-bottom:14px;}
+  .toast{
+    position:fixed;bottom:96px;left:50%;transform:translateX(-50%);
+    background:var(--ink);color:#fff;padding:10px 18px;border-radius:100px;font-size:13px;font-weight:600;
+    opacity:0;pointer-events:none;transition:opacity .25s, transform .25s;z-index:100;white-space:nowrap;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px);}
+  .subtabs{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;}
+  .dice{font-size:40px;text-align:center;padding:10px 0;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <div class="glow"></div>
+    <div class="header-content">
+      <div class="greeting-row">
+        <div>
+          <h1 class="greeting" id="greetingText">Buenos días</h1>
+          <div class="datestr" id="dateText"></div>
+        </div>
+        <div class="ring-wrap">
+          <svg width="64" height="64" viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="27" fill="none" stroke="rgba(43,34,48,0.1)" stroke-width="7"/>
+            <circle id="ringProgress" cx="32" cy="32" r="27" fill="none" stroke="#A8506B" stroke-width="7" stroke-linecap="round" stroke-dasharray="169.6" stroke-dashoffset="169.6"/>
+          </svg>
+          <div class="ring-label" id="ringLabel">0%</div>
+        </div>
+      </div>
+      <div class="chips" id="chipsRow"></div>
+    </div>
+  </div>
+
+  <div id="content"></div>
+</div>
+<div class="navbar" id="navbar">
+  <button class="navbtn" data-tab="hoy"><span class="ic">🌤️</span>Hoy</button>
+  <button class="navbtn" data-tab="semana"><span class="ic">📅</span>Semana</button>
+  <button class="navbtn" data-tab="super"><span class="ic">🛒</span>Súper</button>
+  <button class="navbtn" data-tab="casa"><span class="ic">🏡</span>Casa</button>
+  <button class="navbtn" data-tab="logros"><span class="ic">🏆</span>Logros</button>
+  <button class="navbtn" data-tab="mas"><span class="ic">✨</span>Más</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================= DATA ============================= */
+const DAY_NAMES = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+const DAY_SHORT = ["DOM","LUN","MAR","MIÉ","JUE","VIE","SÁB"];
+const MONTH_NAMES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+
+const INGREDIENTS = {
+  avena:{n:"Avena",c:"Almacén"}, leche:{n:"Leche",c:"Lácteos"}, miel:{n:"Miel",c:"Almacén"},
+  frutillas:{n:"Frutillas",c:"Frutas y verduras"}, manzana:{n:"Manzana",c:"Frutas y verduras"},
+  pera:{n:"Pera",c:"Frutas y verduras"}, durazno:{n:"Durazno",c:"Frutas y verduras"},
+  kiwi:{n:"Kiwi",c:"Frutas y verduras"}, banana:{n:"Banana",c:"Frutas y verduras"},
+  queso_crema:{n:"Queso crema",c:"Lácteos"}, choclo:{n:"Choclo",c:"Frutas y verduras"},
+  carne_picada:{n:"Carne picada",c:"Carnes y pescado"}, arroz_yamani:{n:"Arroz yamaní",c:"Almacén"},
+  cebolla:{n:"Cebolla",c:"Frutas y verduras"}, arroz_sushi:{n:"Arroz de sushi",c:"Almacén"},
+  salmon:{n:"Salmón crudo (apto)",c:"Carnes y pescado"}, yogur:{n:"Yogur",c:"Lácteos"},
+  caldo:{n:"Caldo (cubos)",c:"Almacén"}, fideos:{n:"Fideos finos",c:"Almacén"},
+  pollo_muslo:{n:"Muslo de pollo",c:"Carnes y pescado"}, pollo_pechuga:{n:"Pechuga de pollo",c:"Carnes y pescado"},
+  calabaza:{n:"Calabaza",c:"Frutas y verduras"}, cafe:{n:"Café",c:"Almacén"},
+  castañas:{n:"Castañas de cajú saladas",c:"Almacén"}, canela:{n:"Canela",c:"Almacén"},
+  gelatina:{n:"Gelatina",c:"Almacén"}, hamburguesa:{n:"Carne para hamburguesa",c:"Carnes y pescado"}
+};
+
+// menu keyed by ISO date (2026-07-17 .. 2026-07-23)
+const MENU = {
+"2026-07-17":{label:"Viernes 17", meals:[
+  {hora:"9:00",tipo:"Desayuno",nombre:"Avena fría con leche, miel y fruta",items:["avena","leche","miel","frutillas"],detalle:"Preparar la noche anterior: 4 cdas de avena, 150–180 ml de leche, 1 cdita de miel, fruta a elección. Mezclar, tapar y dejar en la heladera."},
+  {hora:"13:00",tipo:"Almuerzo",nombre:"Milanesa de berenjena + puré de calabaza",items:[],detalle:"En Trefi.",fuera:true},
+  {hora:"17:30",tipo:"Merienda",nombre:"Café frío con leche y wrap sencillo",items:["cafe","leche","queso_crema","choclo"],detalle:"Wrap frío con queso crema y choclo. Se prepara en dos minutos."},
+  {hora:"21:00",tipo:"Cena",nombre:"Hamburguesa casera al plato",items:["hamburguesa","arroz_yamani","cebolla"],detalle:"Con arroz yamaní. Cebolla bien cocida opcional."}
+]},
+"2026-07-18":{label:"Sábado 18", meals:[
+  {hora:"9:30",tipo:"Desayuno",nombre:"Licuado espeso de frutillas",items:["leche","frutillas","avena","miel","banana"],detalle:"Leche fría, frutillas, 3 cdas de avena, un poco de miel, media banana si querés más cremoso."},
+  {hora:"13:30",tipo:"Almuerzo",nombre:"Ensalada de sushi",items:["arroz_sushi","salmon"],detalle:"Arroz de sushi, salmón crudo, tus acompañamientos habituales. No pedir por app."},
+  {hora:"17:30",tipo:"Merienda",nombre:"Yogur con fruta",items:["yogur","durazno"],detalle:"Un yogur sin cereal + durazno, frutillas, kiwi o la fruta que tengas."},
+  {hora:"21:00",tipo:"Cena",nombre:"Sopa completa",items:["caldo","fideos","pollo_muslo","choclo"],detalle:"Caldo, fideos finos, muslo de pollo en pedacitos pequeños, choclo."}
+]},
+"2026-07-19":{label:"Domingo 19", meals:[
+  {hora:"9:30",tipo:"Desayuno",nombre:"Bowl frío de yogur",items:["yogur","avena","manzana","miel"],detalle:"Yogur, avena común, manzana o pera cortada, una cdita de miel."},
+  {hora:"13:30",tipo:"Almuerzo",nombre:"Calabaza rellena",items:["calabaza","carne_picada","cebolla","choclo"],detalle:"Media calabaza al horno, carne picada salteada, cebolla bien cocida, choclo. Sin salsa de tomate, crema ni queso."},
+  {hora:"17:30",tipo:"Merienda",nombre:"Café con fruta y castañas",items:["cafe","leche","castañas"],detalle:"Café frío con leche, una fruta y un puñado servido de castañas de cajú saladas (no de la bolsa directo)."},
+  {hora:"21:00",tipo:"Cena",nombre:"Wraps fríos",items:["pollo_pechuga","queso_crema","choclo"],detalle:"Uno grande o dos pequeños. Pollo frío desmenuzado, queso crema, choclo."}
+]},
+"2026-07-20":{label:"Lunes 20", meals:[
+  {hora:"9:00",tipo:"Desayuno",nombre:"Avena fría sabor café",items:["avena","leche","cafe","miel","pera"],detalle:"Preparar la noche anterior: avena, leche, un poco de café frío, miel, frutillas o pera."},
+  {hora:"13:00",tipo:"Almuerzo",nombre:"Albóndigas al horno + puré de calabaza",items:[],detalle:"En Trefi. Sin salsa. Choclo opcional.",fuera:true},
+  {hora:"17:30",tipo:"Merienda",nombre:"Licuado de durazno",items:["leche","durazno","avena","miel"],detalle:"Leche fría, durazno, 2–3 cdas de avena, miel."},
+  {hora:"21:00",tipo:"Cena",nombre:"Ensalada de sushi casera",items:["arroz_sushi","salmon"],detalle:"Arroz, salmón crudo apto para consumo, tus acompañamientos habituales."}
+]},
+"2026-07-21":{label:"Martes 21", meals:[
+  {hora:"9:00",tipo:"Desayuno",nombre:"Desayuno salado frío",items:["queso_crema","choclo","cafe","leche"],detalle:"Wrap con queso crema y choclo + café frío con leche. Si te resulta poco, sumá una fruta."},
+  {hora:"13:00",tipo:"Almuerzo",nombre:"Caldo con arroz",items:[],detalle:"En Trefi. Caldo, arroz, muslo de pollo pequeño, choclo, cebolla opcional.",fuera:true},
+  {hora:"17:30",tipo:"Merienda",nombre:"Yogur con fruta",items:["yogur","pera"],detalle:"Yogur sin cereal + frutillas, pera, manzana o kiwi."},
+  {hora:"21:00",tipo:"Cena",nombre:"Pastel de calabaza y carne",items:["carne_picada","cebolla","calabaza","choclo"],detalle:"Carne picada salteada con cebolla, puré de calabaza por encima. Sin salsa, crema ni queso gratinado."}
+]},
+"2026-07-22":{label:"Miércoles 22", meals:[
+  {hora:"9:00",tipo:"Desayuno",nombre:"Licuado de café frío",items:["leche","cafe","avena","banana","miel"],detalle:"Leche, café frío, avena, media banana dentro del licuado, un poco de miel."},
+  {hora:"13:00",tipo:"Almuerzo",nombre:"Wraps fríos de pollo",items:[],detalle:"En Trefi. Pollo frío desmenuzado, queso crema, choclo.",fuera:true},
+  {hora:"17:30",tipo:"Merienda",nombre:"Café con fruta y castañas",items:["cafe","leche","castañas"],detalle:"Café frío con leche, una fruta, una porción servida de castañas de cajú saladas."},
+  {hora:"21:00",tipo:"Cena",nombre:"Arroz yamaní con pollo",items:["arroz_yamani","pollo_muslo","choclo","cebolla"],detalle:"Muslo de pollo en trozos muy pequeños, choclo y cebolla bien cocida. Pueden servirse separados."}
+]},
+"2026-07-23":{label:"Jueves 23", meals:[
+  {hora:"9:00",tipo:"Desayuno",nombre:"Avena fría con manzana",items:["avena","leche","manzana","miel","canela"],detalle:"Avena hidratada en leche durante la noche, manzana cortada o rallada, miel. Canela si te gusta."},
+  {hora:"13:00",tipo:"Almuerzo",nombre:"Hamburguesa casera al plato",items:[],detalle:"En Trefi. Puré de calabaza, choclo o cebolla cocida.",fuera:true},
+  {hora:"17:30",tipo:"Merienda",nombre:"Licuado de frutos rojos",items:["leche","frutillas","avena","miel"],detalle:"Leche fría, fruta, avena, miel."},
+  {hora:"21:00",tipo:"Cena",nombre:"Sopa con albóndigas pequeñas",items:["caldo","fideos","carne_picada","choclo"],detalle:"Caldo, fideos finos, albóndigas pequeñas de carne picada, choclo."}
+]}
+};
+
+const AFTER_DINNER = ["Gelatina","Una fruta","Fruta cortada con un poco de miel","Un vaso de leche fría","Un licuado pequeño de leche y fruta"];
+const RESCUE = {
+  comida:["Hamburguesa casera congelada + puré de calabaza","Arroz yamaní ya cocido + carne picada","Caldo + fideos + pollo pequeño","Wraps fríos de pollo, queso crema y choclo","Ensalada de sushi comprada directamente en un local"],
+  merienda:["Café frío con leche + wrap de queso crema y choclo","Yogur + fruta","Licuado de leche, fruta, avena y miel","Fruta + castañas de cajú saladas","Vaso de leche fría con café + fruta"]
+};
+
+const CLEAN_AM = ["Abrir ventanas y ventilar","Hacer la cama","Guardar pijamas y ropa","Dejar mesas de luz despejadas","Estirar las toallas del baño","Pasar una microfibra por la bacha si quedó mojada","Bajar vasos, ropa u objetos que pertenezcan a otro piso","Revisar el lavadero y el sector de Magui y Boli","Levantar caca del parque","Limpiar pis, huellas o suciedad visible","Acomodar sillas, almohadones y mantas"];
+
+const CLEAN_NIGHT = {
+  "Cocina, isla y comedor":["Guardar o lavar toda la vajilla","Dejar la pileta vacía y seca","Limpiar anafe","Limpiar mesadas","Limpiar y despejar completamente la isla","Limpiar la mesa","Acomodar sillas y banquetas","Limpiar rápidamente el sector café","Guardar alimentos y paquetes","Sacar la basura si está llena o tiene olor"],
+  "Lavadero y mascotas":["Revisar que no haya pis ni caca","Limpiar huellas","Sacar pelos visibles","Acomodar camas y mantitas","Revisar agua y recipientes"],
+  "Resto de la casa":["Guardar ropa, zapatos y objetos sueltos","Llevar cada cosa al piso correspondiente","Acomodar sofá, almohadones y mantas","Retirar vasos y platos de la sala de cine","Revisar rápidamente el baño de visitas","Pasar aspiradora rápida en planta baja y escalera si hay pelos"],
+  "Regla no negociable — no dormir con":["Vajilla en la pileta","Isla ocupada","Ropa tirada","Restos de comida","Pis o caca de las perritas","Vasos o platos en otros pisos"]
+};
+
+const CLEAN_WEEKLY = {
+  1:{title:"Cocina, isla y comedor", dur:"35–45 min", note:"Ideal al volver del trabajo, salís a las 16:00.", tasks:["Limpiar frentes de muebles","Limpiar tiradores","Limpiar electrodomésticos por fuera","Limpiar cafetera en profundidad","Limpiar tostadora, pava y pequeños electrodomésticos","Limpiar banquetas y patas","Limpiar mesa y sillas completas","Limpiar laterales de la isla","Limpiar zócalos visibles","Revisar heladera y tirar alimentos vencidos","Limpiar una bandeja o cajón por dentro","Aspirar y lavar el piso"]},
+  2:{title:"Baño principal", dur:"20 min", note:"Tenés GAP a las 19:00 — limpieza corta.", tasks:["Limpiar inodoro completo","Limpiar base y parte trasera del inodoro","Limpiar bacha y grifería","Limpiar espejo","Limpiar ducha y mampara","Sacar pelos del desagüe","Acomodar productos","Reponer papel higiénico","Cambiar toallas si corresponde","Aspirar y limpiar el piso"]},
+  3:{title:"Dormitorio, balcón y vestidor", dur:"40–50 min", note:"Salís a las 16:00.", tasks:["Cambiar sábanas","Sacudir mesas de luz","Limpiar respaldo de la cama","Limpiar espejos","Aspirar debajo de la cama","Guardar ropa y zapatos","Vaciar papeleros","Barrer el balcón","Limpiar baranda","Limpiar puerta ventana si tiene marcas","Sacar hojas y telas de araña","Vestidor: temporizador de 20', trabajar una sola zona, separar en Guardar / Otro ambiente / Donar / Tirar, dejar un sector del piso libre"]},
+  4:{title:"Sala de cine, escritorio gamer y escaleras", dur:"25–30 min", note:"", tasks:["Retirar vasos, platos y envoltorios","Acomodar sofá y almohadones","Aspirar sofá","Aspirar alfombra y piso","Limpiar mesa o mueble de apoyo","Limpiar escritorio","Sacar polvo de controles, consolas y parlantes","Limpiar pantallas con microfibra seca","Ordenar cables y cargadores","Sacudir barandas","Limpiar interruptores","Aspirar escalones y esquinas"]},
+  5:{title:"Lavadero, Magui, Boli y parque", dur:"25 min", note:"Tenés Funcional a las 18:00 — dividir mañana/noche.", tasks:["Antes de salir: levantar caca del parque","Antes de salir: revisar pis y huellas","Antes de salir: poner a lavar mantitas si corresponde","Noche: lavar recipientes de comida y agua","Noche: limpiar profundamente el piso","Noche: aplicar limpiador enzimático donde haya olor a pis","Noche: limpiar paredes bajas y puertas con huellas","Noche: sacudir o cambiar camas y mantas","Noche: limpiar tachos por dentro","Noche: revisar desagües","Noche: limpiar acceso y sector del parque más usado"]},
+  6:{title:"Detalles del sábado", dur:"máx 60 min", note:"Después de Pilates. No se limpia todo — solo el grupo de esta semana.", rotating:true},
+  0:{title:"Reinicio semanal", dur:"20–30 min", note:"No es limpieza profunda.", tasks:["Guardar toda la ropa limpia","Vaciar canastos","Cambiar repasadores","Reponer papel higiénico","Reponer bolsas de basura","Revisar jabón y productos de limpieza","Revisar que no haya cosas acumuladas en la escalera","Ordenar cartera, mochila y llaves","Dejar despejada la isla","Dejar preparada la ropa del lunes","Hacer el cierre nocturno normal"]}
+};
+const SATURDAY_GROUPS = {
+  1:{t:"Alturas", tasks:["Sacar telas de araña","Limpiar lámparas","Limpiar parte superior de puertas","Limpiar marcos","Limpiar rejillas y ventilaciones","Limpiar arriba de la heladera","Limpiar arriba de muebles","Revisar esquinas de techos"]},
+  2:{t:"Bordes", tasks:["Limpiar zócalos","Limpiar esquinas","Limpiar interruptores","Limpiar picaportes","Limpiar patas de muebles","Limpiar parte inferior de puertas","Limpiar bordes de escalones","Limpiar barandas"]},
+  3:{t:"Textiles y vidrios", tasks:["Aspirar profundamente sofá","Aspirar colchón","Lavar fundas de almohadones","Aspirar cortinas","Limpiar ventanas","Limpiar rieles","Limpiar espejos","Limpiar puertas de vidrio","Lavar mantas"]},
+  4:{t:"Lugares ocultos", tasks:["Limpiar debajo de camas","Limpiar detrás del sofá","Limpiar debajo de muebles","Limpiar laterales de electrodomésticos","Limpiar interior de tachos","Limpiar filtros","Limpiar desagües","Revisar humedad","Revisar rincones del lavadero"]},
+  5:{t:"Extra (quinto sábado)", tasks:["Limpiar heladera por dentro","Limpiar horno","Limpiar alacena","Revisar productos de limpieza","Tirar productos vencidos o vacíos"]}
+};
+const CLEAN_MONTHLY = ["Limpiar heladera completa","Limpiar horno","Limpiar lavarropas","Limpiar filtros de aire acondicionado","Limpiar rejillas","Revisar humedad y filtraciones","Limpiar puertas completas","Limpiar marcos de ventanas","Lavar tachos de basura","Revisar medicamentos y vencimientos","Ordenar un cajón o placard problemático","Revisar terraza y desagües"];
+const CLEAN_QUARTERLY = ["Lavar cortinas","Girar o rotar colchón si corresponde","Limpiar profundamente colchón y almohadas","Vaciar y limpiar placares","Revisar ropa para donar o vender","Limpiar detrás de heladera y lavarropas","Limpiar paredes con marcas","Revisar terraza, balcón y parque","Hacer control de plagas si fuera necesario"];
+const CLEAN_EMERGENCY = [
+  {t:"Primeros 5 min", tasks:["Abrir ventanas","Guardar todo lo que esté fuera de lugar","Despejar isla y mesa"]},
+  {t:"Siguientes 5 min", tasks:["Limpiar pileta, anafe y mesadas","Limpiar baño de visitas"]},
+  {t:"Siguientes 5 min", tasks:["Aspirar planta baja","Sacar pelos y huellas"]},
+  {t:"Últimos 5 min", tasks:["Acomodar almohadones","Sacar basura","Poner toalla limpia en el baño","Encender una luz cálida o dejar buen aroma"]}
+];
+const CLEAN_GOAL = ["No hay objetos acumulados","La cocina queda cerrada todas las noches","Los baños no tienen manchas ni pelos","El piso no tiene pelos ni huellas visibles","No hay olor a mascotas","La ropa está guardada","Las superficies están despejadas","No hay telas de araña","Los vidrios y espejos principales están limpios","El vestidor no recibe objetos “por ahora”"];
+
+const WORKOUT = {
+  1:{title:"Glúteo + femorales", warmup:["Caminata o bicicleta 5'","Hip Thrust liviano 1×10","Peso Muerto Rumano liviano 1×10"], main:["Hip Thrust — 4×8-10","Peso Muerto Rumano — 3×8-10","Curl Femoral — 3×10-12","Prensa 45° (pies medios/altos) — 3×10-12","Abductores en máquina — 3×15-20"], cooldown:["Estirar glúteos","Estirar femorales","Estirar cuádriceps"]},
+  2:{title:"Espalda + hombros", warmup:["Caminata 5'"], main:["Jalón al pecho — 3×10-12","Remo sentado — 3×10-12","Elevaciones laterales — 3×12-15","Press de hombros — 2×10-12","Tríceps en polea — 2×12-15"], cooldown:["Estirar espalda","Estirar hombros"]},
+  3:{title:"Recuperación", warmup:[], main:["Caminata 30-40 minutos","Movilidad general"], cooldown:["Estiramientos 10 minutos"]},
+  4:{title:"Pierna", warmup:["Caminata 5'"], main:["Prensa 45° — 4×10","Hack / Goblet / Multipower — 3×10","Búlgara o Prensa unilateral — 3×10","Extensión de cuádriceps — 3×12-15","Hiperextensión para glúteos — 3×12-15"], cooldown:["Estirar piernas","Estirar glúteos"]},
+  5:{title:"Funcional", warmup:[], main:["Clase completa","Hidratación"], cooldown:["Estirar al finalizar"]},
+  6:{title:"Glúteo metabólico", warmup:["Caminata 5'"], main:["Hip Thrust liviano — 3×12-15","Abductores — 3×15-25","Patada de glúteo en polea — 3×12-15","Curl Femoral — 2×12-15","Extensión de cuádriceps — 2×15-20","Elevaciones laterales — 2×15"], cooldown:["Estiramiento completo"]},
+  0:{title:"Descanso", warmup:[], main:["Descanso, o caminata tranquila 30 min"], cooldown:["Movilidad 10 minutos"]}
+};
+
+const REWARDS = ["Café rico","Comprar una planta","Mirar una película","Noche de sushi"];
+
+/* ============================= STATE ============================= */
+let state = {
+  dailyLogs:{},          // date -> {training,eatingCount,water,mood,sleep,houseAM,houseNight,houseWeekly}
+  groceryChecked:{},
+  brainDump:[],
+  giftIdeas:[],
+  homeMaintenance:[
+    {t:"Cambiar filtro de aire",due:""},
+    {t:"Revisar calefón",due:""}
+  ],
+  plants:[{name:"Planta 1", every:7, last:""},{name:"Planta 2", every:10, last:""}],
+  homeIdeas:[],
+  streak:0,
+  lastStreakDate:"",
+  claimedRewards:[]
+};
+let activeTab = "hoy";
+let viewDate = new Date(); // date currently viewed in "Semana" tab
+let calMonth = new Date(); // month currently viewed in the calendar grid
+
+function todayKey(d){ d = d || new Date(); return d.toISOString().slice(0,10); }
+function dow(d){ return d.getDay(); } // 0 sun .. 6 sat
+
+async function loadState(){
+  try{
+    if(window.storage){
+      const r = await window.storage.get('app-state', false);
+      if(r && r.value){ state = Object.assign(state, JSON.parse(r.value)); return; }
+    }
+  }catch(e){ /* window.storage not available here, try local fallback */ }
+  try{
+    const raw = localStorage.getItem('nati-app-state');
+    if(raw){ state = Object.assign(state, JSON.parse(raw)); }
+  }catch(e){ /* first run, nothing saved yet */ }
+}
+async function saveState(){
+  try{ if(window.storage){ await window.storage.set('app-state', JSON.stringify(state), false); } }
+  catch(e){ /* fall through to local */ }
+  try{ localStorage.setItem('nati-app-state', JSON.stringify(state)); }
+  catch(e){ console.error('storage error', e); }
+}
+function getLog(dateKey){
+  if(!state.dailyLogs[dateKey]){
+    state.dailyLogs[dateKey] = {training:false, eatingCount:0, water:0, mood:"", sleep:"", houseAM:false, houseNight:false, houseWeekly:false, tasksDone:{}};
+  }
+  return state.dailyLogs[dateKey];
+}
+
+/* ============================= HELPERS ============================= */
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+function esc(s){ return (s||"").replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function downloadBlobFile(filename, content){
+  const blob = new Blob([content], {type:"text/calendar"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+function downloadICS(title, dateKey, time){
+  time = time || "09:00";
+  const [y,m,d] = dateKey.split("-");
+  const [hh,mm] = time.split(":");
+  const dt = `${y}${m}${d}T${hh}${mm}00`;
+  const ics = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nUID:${Date.now()}@nati-app\nSUMMARY:${title.replace(/\n/g," ")}\nDTSTART:${dt}\nDTEND:${dt}\nEND:VEVENT\nEND:VCALENDAR`;
+  downloadBlobFile(`${title.slice(0,30).replace(/\s+/g,'_')}.ics`, ics);
+  toast("Descargado. Abrilo para agregarlo al Calendario del iPhone");
+}
+
+const DOW_ABBR = ["SU","MO","TU","WE","TH","FR","SA"];
+function nextDateForDow(targetDow){
+  const d = new Date();
+  const diff = (targetDow - d.getDay() + 7) % 7;
+  d.setDate(d.getDate() + diff);
+  return d;
+}
+function fmtDT(date, time){
+  const [hh,mm] = time.split(":");
+  const y = date.getFullYear(), m = String(date.getMonth()+1).padStart(2,'0'), day = String(date.getDate()).padStart(2,'0');
+  return `${y}${m}${day}T${hh}${mm}00`;
+}
+function buildVEvent(uid, title, date, time, byday){
+  return `BEGIN:VEVENT\nUID:${uid}@nati-app\nSUMMARY:${title.replace(/\n/g," ")}\nDTSTART:${fmtDT(date,time)}\nDTEND:${fmtDT(date,time)}\nRRULE:FREQ=WEEKLY;BYDAY=${byday}\nEND:VEVENT`;
+}
+function generateWeeklyICS(){
+  const events = [];
+  // cierre de casa, todos los días
+  events.push(buildVEvent('cierre-casa', 'Cierre de casa (noche)', nextDateForDow(new Date().getDay()), "21:30", DOW_ABBR.join(",")));
+  // entrenamiento por día
+  for(let dw=0; dw<7; dw++){
+    const w = WORKOUT[dw];
+    events.push(buildVEvent('entreno-'+dw, 'Entrenamiento — '+w.title, nextDateForDow(dw), "18:00", DOW_ABBR[dw]));
+  }
+  // limpieza por día
+  for(let dw=0; dw<7; dw++){
+    const c = CLEAN_WEEKLY[dw];
+    events.push(buildVEvent('limpieza-'+dw, 'Casa — '+c.title, nextDateForDow(dw), "19:00", DOW_ABBR[dw]));
+  }
+  return `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Nati App//ES\n${events.join("\n")}\nEND:VCALENDAR`;
+}
+function downloadWeeklyICS(){
+  downloadBlobFile('Rutina_semanal_Nati.ics', generateWeeklyICS());
+  toast("Descargado. Abrilo una sola vez y se repite solo cada semana");
+}
+
+function weekOfMonth(d){
+  const day = d.getDate();
+  return Math.ceil(day/7);
+}
+
+/* ============================= RENDER: HEADER ============================= */
+function renderHeader(){
+  const now = new Date();
+  const hh = now.getHours();
+  const greet = hh<12 ? "Buenos días" : hh<20 ? "Buenas tardes" : "Buenas noches";
+  document.getElementById('greetingText').textContent = `${greet}, Nati`;
+  document.getElementById('dateText').textContent = `Hoy es ${DAY_NAMES[now.getDay()].toLowerCase()} ${now.getDate()} de ${MONTH_NAMES[now.getMonth()]}`;
+
+  const key = todayKey();
+  const log = getLog(key);
+  const parts = [log.training, log.eatingCount>=4, log.houseAM, log.houseNight, log.water>=2];
+  const done = parts.filter(Boolean).length;
+  const pct = Math.round(done/parts.length*100);
+  const circumference = 169.6;
+  const ring = document.getElementById('ringProgress');
+  ring.setAttribute('stroke-dashoffset', circumference - (circumference*pct/100));
+  document.getElementById('ringLabel').textContent = pct+"%";
+
+  const chips = [
+    {label:"Entren.", val: log.training ? "✅" : "—"},
+    {label:"Agua", val: `${log.water}b · ${(log.water*0.9).toFixed(1)}L`, adj:true, key:'water', max:6},
+    {label:"Ánimo", val: log.mood || "—"},
+    {label:"Sueño", val: log.sleep ? log.sleep+"h" : "—"},
+    {label:"Racha", val: state.streak+"d"}
+  ];
+  document.getElementById('chipsRow').innerHTML = chips.map(c=>{
+    if(c.adj){
+      return `<div class="chip"><div class="label">${c.label}</div><div class="val" style="display:flex;align-items:center;gap:4px;">
+        <button onclick="adjWater(-1)">−</button>${c.val}<button onclick="adjWater(1)">+</button></div></div>`;
+    }
+    return `<div class="chip"><div class="label">${c.label}</div><div class="val">${c.val}</div></div>`;
+  }).join("");
+}
+function adjWater(delta){
+  const log = getLog(todayKey());
+  log.water = Math.max(0, Math.min(6, log.water + delta));
+  saveState(); renderHeader();
+}
+
+/* ============================= TAB: HOY ============================= */
+function renderHoy(){
+  const now = new Date();
+  const key = todayKey();
+  const log = getLog(key);
+  const dw = dow(now);
+  const menu = MENU[key];
+  const clean = CLEAN_WEEKLY[dw];
+  const work = WORKOUT[dw];
+
+  let pendingCount = (log.training?0:1) + (log.houseAM?0:1) + (log.houseNight?0:1);
+
+  let html = `<div class="section">
+    <div class="section-title">Hoy</div>
+    <div class="section-sub">Resumen rápido para no tener que pensar</div>
+
+    <div class="card">
+      <div class="card-title">🧠 Resumen del día <span class="tag">auto</span></div>
+      <ul style="margin:0;padding-left:18px;font-size:13.5px;line-height:1.7;">
+        <li>Hoy toca <b>${work ? work.title.toLowerCase() : ''}</b> en el entrenamiento.</li>
+        <li>${log.eatingCount>=4?'Ya registraste las 4 comidas de hoy.':`Llevás ${log.eatingCount} de 4 comidas registradas.`}</li>
+        <li>${clean ? `Limpieza del día: <b>${clean.title.toLowerCase()}</b> (${clean.dur}).` : ''}</li>
+        <li>${pendingCount>0 ? `Te quedan ${pendingCount} cosas del día sin marcar.` : 'Cerraste todo lo del día. ✨'}</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">✅ Tareas de hoy</div>
+      <div class="task ${log.training?'done':''}"><input type="checkbox" ${log.training?'checked':''} onchange="toggleSimple('training')"><label>Entrenamiento — ${work?work.title:''}</label></div>
+      <div class="task ${log.houseAM?'done':''}"><input type="checkbox" ${log.houseAM?'checked':''} onchange="toggleSimple('houseAM')"><label>Rutina de la mañana (casa)</label></div>
+      <div class="task ${log.houseNight?'done':''}"><input type="checkbox" ${log.houseNight?'checked':''} onchange="toggleSimple('houseNight')"><label>Cierre de casa (noche)</label></div>
+      <div class="task ${log.houseWeekly?'done':''}"><input type="checkbox" ${log.houseWeekly?'checked':''} onchange="toggleSimple('houseWeekly')"><label>${clean?clean.title:''} (tarea del día)</label></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🍽️ Comidas de hoy</div>
+      ${menu ? menu.meals.map(m=>`
+        <div class="meal-block">
+          <div class="hh"><span>${m.hora} · ${m.tipo}${m.fuera?' (Trefi)':''}</span></div>
+          <div class="name">${esc(m.nombre)}</div>
+        </div>`).join("") : `<div class="note">No hay menú cargado para esta fecha. Mirá la pestaña Semana.</div>`}
+      <div class="row" style="margin-top:6px;gap:6px;">
+        ${[1,2,3,4].map(n=>`<button class="pill ${log.eatingCount>=n?'active':''}" onclick="setEating(${n})">${n}</button>`).join("")}
+      </div>
+      <div class="note">Marcá cuántas de las 4 comidas ya hiciste hoy. No hace falta que sea exacto, es solo para acompañar.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🎲 ¿Qué cocino?</div>
+      <div class="dice" id="diceResult">🍽️</div>
+      <button class="btn block" onclick="pickRandomMeal()">Elegir comida al azar</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📆 Calendario del iPhone</div>
+      <div class="info-banner">Esto lo hacés <b>una sola vez</b>: descargás un archivo con toda tu rutina semanal (entrenamiento + cierre de casa + limpieza) y cuando lo abrís, iPhone te ofrece agregarlo al Calendario. Como cada evento se repite cada semana en su día, después de importarlo una vez queda solo — no hace falta tocar nada más.</div>
+      <button class="btn block" onclick="downloadWeeklyICS()">📥 Configurar recordatorios semanales (una vez)</button>
+      <div class="note" style="margin-top:8px;">¿Por qué no se agrega directo? Ninguna app dentro del navegador puede escribir en tu Calendario sin que vos se lo permitas desde el propio iPhone — es una restricción de Apple, no algo que dependa de esta app.</div>
+    </div>
+  </div>`;
+  document.getElementById('content').innerHTML = html;
+}
+function toggleSimple(field, dateKey){
+  dateKey = dateKey || todayKey();
+  const log = getLog(dateKey);
+  log[field] = !log[field];
+  if(field==='training' && log.training && dateKey===todayKey()){ bumpStreak(); }
+  saveState(); renderHeader(); RENDERERS[activeTab]();
+}
+function setEating(n, dateKey){
+  dateKey = dateKey || todayKey();
+  const log = getLog(dateKey);
+  log.eatingCount = (log.eatingCount===n) ? n-1 : n;
+  saveState(); renderHeader(); RENDERERS[activeTab]();
+}
+function bumpStreak(){
+  const key = todayKey();
+  if(state.lastStreakDate === key) return;
+  const yest = new Date(); yest.setDate(yest.getDate()-1);
+  if(state.lastStreakDate === todayKey(yest)){ state.streak += 1; }
+  else { state.streak = 1; }
+  state.lastStreakDate = key;
+}
+function pickRandomMeal(){
+  const menu = MENU[todayKey()];
+  const pool = menu ? menu.meals.filter(m=>!m.fuera) : [];
+  if(!pool.length){ document.getElementById('diceResult').innerHTML = "No hay opciones para hoy 🤷‍♀️"; return; }
+  const pick = pool[Math.floor(Math.random()*pool.length)];
+  document.getElementById('diceResult').innerHTML = `<div style="font-size:15px;font-weight:700;">${esc(pick.nombre)}</div><div style="font-size:11.5px;color:var(--ink-soft);margin-top:4px;">${pick.hora} · ${pick.tipo}</div>`;
+}
+
+/* ============================= TAB: SEMANA ============================= */
+let semanaSub = "menu";
+function renderSemana(){
+  let html = `<div class="section">
+    <div class="section-title">Semana</div>
+    <div class="section-sub">Menú, entrenamiento y limpieza, día por día</div>
+    <div class="subtabs">
+      <button class="pill ${semanaSub==='calendario'?'active':''}" onclick="setSemanaSub('calendario')">📅 Calendario</button>
+      <button class="pill ${semanaSub==='menu'?'active':''}" onclick="setSemanaSub('menu')">🍽️ Menú</button>
+      <button class="pill ${semanaSub==='training'?'active':''}" onclick="setSemanaSub('training')">🏋️ Entreno</button>
+      <button class="pill ${semanaSub==='casa'?'active':''}" onclick="setSemanaSub('casa')">🏡 Casa</button>
+    </div>
+    <div class="day-picker" id="dayPicker"></div>
+    <div id="semanaContent"></div>
+  </div>`;
+  document.getElementById('content').innerHTML = html;
+
+  const picker = document.getElementById('dayPicker');
+  if(semanaSub==='calendario'){
+    picker.innerHTML = "";
+  } else {
+    let days = [];
+    if(semanaSub==='menu'){
+      days = Object.keys(MENU);
+    } else {
+      const base = new Date();
+      const startOfWeek = new Date(base); startOfWeek.setDate(base.getDate()-base.getDay());
+      days = [...Array(7)].map((_,i)=>{ const d=new Date(startOfWeek); d.setDate(startOfWeek.getDate()+i); return todayKey(d); });
+    }
+    const curKey = todayKey(viewDate);
+    picker.innerHTML = days.map(k=>{
+      const d = new Date(k+"T00:00:00");
+      const active = k===curKey;
+      return `<button class="day-btn ${active?'active':''}" onclick="selectDay('${k}')"><div class="d">${DAY_SHORT[d.getDay()]}</div><div class="n">${d.getDate()}</div></button>`;
+    }).join("");
+  }
+
+  renderSemanaContent();
+}
+function setSemanaSub(s){ semanaSub=s; renderSemana(); }
+function selectDay(k){ viewDate = new Date(k+"T00:00:00"); renderSemanaContent(); renderSemana(); }
+function renderCalendarGrid(){
+  const year = calMonth.getFullYear(), month = calMonth.getMonth();
+  const startDow = new Date(year,month,1).getDay();
+  const daysInMonth = new Date(year,month+1,0).getDate();
+  const todayK = todayKey();
+  const curKey = todayKey(viewDate);
+  let cells = [];
+  for(let i=0;i<startDow;i++) cells.push(null);
+  for(let day=1; day<=daysInMonth; day++) cells.push(day);
+  const monthLabel = `${MONTH_NAMES[calMonth.getMonth()]} ${calMonth.getFullYear()}`;
+  return `<div class="card">
+    <div class="flex-between" style="margin-bottom:10px;">
+      <button class="btn small secondary" onclick="shiftMonth(-1)">‹</button>
+      <div style="font-weight:700;text-transform:capitalize;">${monthLabel}</div>
+      <button class="btn small secondary" onclick="shiftMonth(1)">›</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;font-size:10px;text-align:center;color:var(--ink-soft);font-weight:700;margin-bottom:4px;">
+      ${DAY_SHORT.map(s=>`<div>${s[0]}</div>`).join("")}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">
+    ${cells.map(day=>{
+       if(!day) return `<div></div>`;
+       const key = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+       const log = state.dailyLogs[key];
+       let dot = "";
+       if(log){
+         const all = log.training && log.houseAM && log.houseNight && log.eatingCount>=4;
+         const some = log.training || log.houseAM || log.houseNight || log.eatingCount>0;
+         dot = all ? "🟢" : (some ? "🟡" : "");
+       }
+       const isToday = key===todayK, isSel = key===curKey;
+       return `<button onclick="selectCalDay('${key}')" style="aspect-ratio:1;border-radius:10px;border:${isSel?'2px solid var(--rose-deep)':'1px solid var(--line)'};background:${isToday?'var(--rose-soft)':'#fff'};font-family:'IBM Plex Mono',monospace;font-size:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;">
+         <span>${day}</span><span style="font-size:8px;">${dot||'&nbsp;'}</span>
+       </button>`;
+    }).join("")}
+    </div>
+    <div class="note" style="margin-top:10px;">🟢 día completo · 🟡 día empezado · sin punto = sin marcar (o todavía no llega). Tocá un día para ver o cargar sus pendientes.</div>
+  </div>`;
+}
+function shiftMonth(delta){ calMonth.setMonth(calMonth.getMonth()+delta); renderSemanaContent(); }
+function selectCalDay(key){ viewDate = new Date(key+"T00:00:00"); renderSemanaContent(); }
+function renderDayDetail(key){
+  const d = new Date(key+"T00:00:00");
+  const dw2 = d.getDay();
+  const log = getLog(key);
+  const menu = MENU[key];
+  const w = WORKOUT[dw2];
+  const clean = CLEAN_WEEKLY[dw2];
+  const isFuture = key > todayKey();
+  const label = `${DAY_NAMES[dw2]} ${d.getDate()}/${d.getMonth()+1}`;
+  return `<div class="card">
+    <div class="card-title">📌 ${label}${isFuture?' <span class="tag">próximo</span>':''}</div>
+    <div class="task ${log.training?'done':''}"><input type="checkbox" ${log.training?'checked':''} onchange="toggleSimple('training','${key}')"><label>Entrenamiento — ${w.title}</label></div>
+    <div class="task ${log.houseAM?'done':''}"><input type="checkbox" ${log.houseAM?'checked':''} onchange="toggleSimple('houseAM','${key}')"><label>Rutina de la mañana (casa)</label></div>
+    <div class="task ${log.houseNight?'done':''}"><input type="checkbox" ${log.houseNight?'checked':''} onchange="toggleSimple('houseNight','${key}')"><label>Cierre de casa (noche)</label></div>
+    <div class="task ${log.houseWeekly?'done':''}"><input type="checkbox" ${log.houseWeekly?'checked':''} onchange="toggleSimple('houseWeekly','${key}')"><label>${clean.title} (tarea del día)</label></div>
+    <div class="row" style="margin-top:6px;gap:6px;">
+      ${[1,2,3,4].map(n=>`<button class="pill ${log.eatingCount>=n?'active':''}" onclick="setEating(${n},'${key}')">${n}</button>`).join("")}
+    </div>
+    <div class="note">Comidas registradas ese día (tocá el número).</div>
+  </div>
+  ${menu ? `<div class="card"><div class="card-title">🍽️ Menú de ese día</div>${menu.meals.map(m=>`<div class="meal-block"><div class="hh"><span>${m.hora} · ${m.tipo}${m.fuera?' · Trefi':''}</span></div><div class="name">${esc(m.nombre)}</div></div>`).join("")}</div>` : ''}`;
+}
+function renderSemanaContent(){
+  const el = document.getElementById('semanaContent');
+  const key = todayKey(viewDate);
+  const dw = dow(viewDate);
+  if(semanaSub==='calendario'){
+    el.innerHTML = renderCalendarGrid() + renderDayDetail(key);
+    return;
+  }
+  if(semanaSub==='menu'){
+    const menu = MENU[key];
+    el.innerHTML = menu ? `<div class="card"><div class="card-title">${menu.label}</div>${menu.meals.map(m=>`
+      <div class="meal-block">
+        <div class="hh"><span>${m.hora} · ${m.tipo}${m.fuera?' · Trefi':''}</span></div>
+        <div class="name">${esc(m.nombre)}</div>
+        <div class="note" style="margin-top:0;">${esc(m.detalle||"")}</div>
+      </div>`).join("")}</div>
+      <div class="card"><div class="card-title">🌙 Después de cenar</div><div class="note">No es obligación ni un reemplazo de nada — una opción elegida de antes para no improvisar.</div>
+        <ul style="padding-left:18px;font-size:13.5px;line-height:1.7;">${AFTER_DINNER.map(a=>`<li>${a}</li>`).join("")}</ul></div>
+      <div class="card"><div class="card-title">🆘 Opciones de rescate</div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:4px;">Almuerzo o cena</div>
+        <ul style="padding-left:18px;font-size:13px;line-height:1.6;margin-bottom:8px;">${RESCUE.comida.map(a=>`<li>${a}</li>`).join("")}</ul>
+        <div style="font-size:13px;font-weight:700;margin-bottom:4px;">Merienda de 2 minutos</div>
+        <ul style="padding-left:18px;font-size:13px;line-height:1.6;">${RESCUE.merienda.map(a=>`<li>${a}</li>`).join("")}</ul></div>
+      ` : `<div class="empty"><span class="big">📭</span>No hay menú cargado para este día.</div>`;
+  } else if(semanaSub==='training'){
+    const w = WORKOUT[dw];
+    el.innerHTML = `<div class="card"><div class="card-title">🏋️ ${w.title}</div>
+      ${w.warmup.length?`<div style="font-size:12.5px;font-weight:700;color:var(--rose-deep);margin-bottom:4px;">🔥 Entrada en calor</div><ul style="padding-left:18px;font-size:13.5px;margin-bottom:10px;">${w.warmup.map(t=>`<li>${t}</li>`).join("")}</ul>`:''}
+      <div style="font-size:12.5px;font-weight:700;color:var(--rose-deep);margin-bottom:4px;">💪 Entrenamiento</div>
+      <ul style="padding-left:18px;font-size:13.5px;margin-bottom:10px;">${w.main.map(t=>`<li>${t}</li>`).join("")}</ul>
+      ${w.cooldown.length?`<div style="font-size:12.5px;font-weight:700;color:var(--rose-deep);margin-bottom:4px;">🧘 Vuelta a la calma</div><ul style="padding-left:18px;font-size:13.5px;">${w.cooldown.map(t=>`<li>${t}</li>`).join("")}</ul>`:''}
+      </div>
+      <div class="card"><div class="card-title">💧 Recordatorios</div>
+      <ul style="padding-left:18px;font-size:13.5px;line-height:1.7;"><li>Llevar botella de agua</li><li>Entrenar con buena técnica</li><li>Registrar pesos utilizados</li><li>Comer proteína después del entrenamiento</li><li>Dormir al menos 7-8 horas</li></ul></div>`;
+  } else {
+    const clean = CLEAN_WEEKLY[dw];
+    let extra = "";
+    if(clean.rotating){
+      const wm = weekOfMonth(viewDate);
+      const g = SATURDAY_GROUPS[wm] || SATURDAY_GROUPS[1];
+      extra = `<div class="note" style="margin-bottom:10px;">Semana ${wm} del mes → grupo: <b>${g.t}</b></div><ul style="padding-left:18px;font-size:13.5px;line-height:1.7;">${g.tasks.map(t=>`<li>${t}</li>`).join("")}</ul>`;
+    } else {
+      extra = `<ul style="padding-left:18px;font-size:13.5px;line-height:1.7;">${clean.tasks.map(t=>`<li>${t}</li>`).join("")}</ul>`;
+    }
+    el.innerHTML = `<div class="card"><div class="card-title">🏡 ${clean.title}</div><div class="note" style="margin-bottom:10px;">${clean.dur}${clean.note?' · '+clean.note:''}</div>${extra}</div>`;
+  }
+}
+
+/* ============================= TAB: SUPER ============================= */
+function renderSuper(){
+  const key = todayKey();
+  const menu = MENU[key];
+  const todayItems = menu ? [...new Set(menu.meals.flatMap(m=>m.items))] : [];
+
+  const weekItems = [...new Set(Object.values(MENU).flatMap(d=>d.meals.flatMap(m=>m.items)))];
+  const byCat = {};
+  weekItems.forEach(id=>{
+    const ing = INGREDIENTS[id]; if(!ing) return;
+    byCat[ing.c] = byCat[ing.c] || [];
+    byCat[ing.c].push(id);
+  });
+
+  let html = `<div class="section">
+    <div class="section-title">Lista del súper</div>
+    <div class="section-sub">Se arma sola con el menú de la semana</div>`;
+
+  if(todayItems.length){
+    html += `<div class="card">
+      <div class="card-title">🔔 Lo que se suma hoy</div>
+      <div class="pill-row">${todayItems.map(id=>`<span class="pill">${INGREDIENTS[id]?INGREDIENTS[id].n:id}</span>`).join("")}</div>
+    </div>`;
+  }
+
+  html += `<div class="card"><div class="card-title">🛒 Lista completa de la semana</div>`;
+  Object.keys(byCat).forEach(cat=>{
+    html += `<div style="font-size:12px;font-weight:700;color:var(--rose-deep);margin:10px 0 4px;">${cat}</div>`;
+    byCat[cat].forEach(id=>{
+      const checked = !!state.groceryChecked[id];
+      html += `<div class="task ${checked?'done':''}"><input type="checkbox" ${checked?'checked':''} onchange="toggleGrocery('${id}')"><label>${INGREDIENTS[id].n}</label></div>`;
+    });
+  });
+  html += `<button class="btn secondary block" style="margin-top:12px;" onclick="clearGrocery()">Vaciar lista (nueva semana)</button></div>`;
+  html += `</div>`;
+  document.getElementById('content').innerHTML = html;
+}
+function toggleGrocery(id){ state.groceryChecked[id] = !state.groceryChecked[id]; saveState(); renderSuper(); }
+function clearGrocery(){ state.groceryChecked = {}; saveState(); renderSuper(); toast("Lista vaciada"); }
+
+/* ============================= TAB: CASA ============================= */
+let casaSub = "hoy";
+function renderCasa(){
+  const now = new Date();
+  const dw = now.getDay();
+  const clean = CLEAN_WEEKLY[dw];
+  let html = `<div class="section">
+    <div class="section-title">Casa</div>
+    <div class="section-sub">Limpieza, mantenimiento y plantas</div>
+    <div class="subtabs">
+      <button class="pill ${casaSub==='hoy'?'active':''}" onclick="setCasaSub('hoy')">Hoy</button>
+      <button class="pill ${casaSub==='emerg'?'active':''}" onclick="setCasaSub('emerg')">Emergencia 20'</button>
+      <button class="pill ${casaSub==='mant'?'active':''}" onclick="setCasaSub('mant')">Mantenimiento</button>
+      <button class="pill ${casaSub==='plantas'?'active':''}" onclick="setCasaSub('plantas')">Plantas</button>
+      <button class="pill ${casaSub==='meta'?'active':''}" onclick="setCasaSub('meta')">Meta</button>
+    </div>`;
+
+  if(casaSub==='hoy'){
+    const log = getLog(todayKey());
+    html += `<div class="card"><div class="card-title">🌤️ Mañana <span class="tag">10-15 min</span></div>
+      ${CLEAN_AM.map((t,i)=>`<div class="task ${log.tasksDone['am'+i]?'done':''}"><input type="checkbox" ${log.tasksDone['am'+i]?'checked':''} onchange="toggleTask('am${i}')"><label>${t}</label></div>`).join("")}
+      </div>
+      <div class="card"><div class="card-title">🌙 Cierre de noche <span class="tag">20-25 min</span></div>
+      ${Object.entries(CLEAN_NIGHT).map(([grp,tasks])=>`
+        <div style="font-size:12px;font-weight:700;color:var(--rose-deep);margin:8px 0 4px;">${grp}</div>
+        ${tasks.map((t,i)=>{const id='night'+grp.slice(0,3)+i; return `<div class="task ${log.tasksDone[id]?'done':''}"><input type="checkbox" ${log.tasksDone[id]?'checked':''} onchange="toggleTask('${id}')"><label>${t}</label></div>`;}).join("")}
+      `).join("")}
+      </div>
+      <div class="card"><div class="card-title">📌 Tarea del día — ${clean.title}</div><div class="note" style="margin-bottom:8px;">${clean.dur}${clean.note?' · '+clean.note:''}</div>
+      <button class="btn secondary block" onclick="setActiveTab('semana')">Ver detalle en Semana</button></div>`;
+  } else if(casaSub==='emerg'){
+    html += CLEAN_EMERGENCY.map(block=>`<div class="card"><div class="card-title">⏱️ ${block.t}</div>
+      ${block.tasks.map(t=>`<div class="task"><input type="checkbox"><label>${t}</label></div>`).join("")}</div>`).join("");
+  } else if(casaSub==='mant'){
+    html += `<div class="card"><div class="card-title">🔧 Mantenimiento del hogar</div>
+      ${state.homeMaintenance.map((m,i)=>`
+        <div class="list-item"><span>${esc(m.t)}${m.due?' · <span class="mono" style="font-size:11.5px;color:var(--ink-soft);">'+m.due+'</span>':''}</span><button class="del" onclick="delMaint(${i})">×</button></div>
+      `).join("") || `<div class="empty">Nada cargado todavía.</div>`}
+      <div class="row" style="margin-top:10px;">
+        <input type="text" id="maintText" placeholder="Ej: Revisar el techo">
+      </div>
+      <div class="row" style="margin-top:8px;">
+        <input type="date" id="maintDate" style="flex:1;">
+        <button class="btn small" onclick="addMaint()">Agregar</button>
+      </div>
+      <div class="note">Ideas: cambiar filtro, pintar, revisar techo, aire acondicionado, calefón.</div>
+    </div>`;
+  } else if(casaSub==='plantas'){
+    html += `<div class="card"><div class="card-title">🪴 Plantas</div>
+      ${state.plants.map((p,i)=>{
+        const daysSince = p.last ? Math.floor((new Date()-new Date(p.last))/86400000) : null;
+        const due = daysSince===null || daysSince>=p.every;
+        return `<div class="list-item">
+          <span>${esc(p.name)} <span style="color:var(--ink-soft);font-size:12px;">· cada ${p.every} días ${due?'· 💧 toca regar':daysSince!==null?'· regada hace '+daysSince+'d':''}</span></span>
+          <button class="btn small ${due?'':'secondary'}" onclick="waterPlant(${i})">Regué</button>
+        </div>`;
+      }).join("")}
+    </div>`;
+  } else if(casaSub==='meta'){
+    html += `<div class="card"><div class="card-title">🎯 La casa está impecable cuando…</div>
+      <ul style="padding-left:18px;font-size:13.5px;line-height:1.8;">${CLEAN_GOAL.map(g=>`<li>${g}</li>`).join("")}</ul></div>
+      <div class="card"><div class="card-title">🗓️ Una vez por mes</div><ul style="padding-left:18px;font-size:13px;line-height:1.7;">${CLEAN_MONTHLY.map(g=>`<li>${g}</li>`).join("")}</ul></div>
+      <div class="card"><div class="card-title">🗓️ Cada tres meses</div><ul style="padding-left:18px;font-size:13px;line-height:1.7;">${CLEAN_QUARTERLY.map(g=>`<li>${g}</li>`).join("")}</ul></div>`;
+  }
+  html += `</div>`;
+  document.getElementById('content').innerHTML = html;
+}
+function setCasaSub(s){ casaSub=s; renderCasa(); }
+function toggleTask(id){
+  const log = getLog(todayKey());
+  log.tasksDone[id] = !log.tasksDone[id];
+  saveState(); renderCasa();
+}
+function addMaint(){
+  const t = document.getElementById('maintText').value.trim();
+  const due = document.getElementById('maintDate').value;
+  if(!t) return;
+  state.homeMaintenance.push({t,due});
+  saveState(); renderCasa(); toast("Agregado");
+}
+function delMaint(i){ state.homeMaintenance.splice(i,1); saveState(); renderCasa(); }
+function waterPlant(i){ state.plants[i].last = todayKey(); saveState(); renderCasa(); toast("Regada 💧"); }
+
+/* ============================= TAB: LOGROS ============================= */
+function renderHistoryRows(){
+  const keys = Object.keys(state.dailyLogs).sort().reverse().slice(0,14);
+  if(!keys.length) return `<div class="empty">Todavía no hay días guardados.</div>`;
+  return keys.map(k=>{
+    const l = state.dailyLogs[k];
+    const d = new Date(k+"T00:00:00");
+    const label = `${DAY_SHORT[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`;
+    return `<div class="list-item">
+      <span class="mono" style="font-size:12px;">${label}</span>
+      <span style="font-size:15px;display:flex;gap:6px;">
+        <span title="Entrenamiento">${l.training?'🏋️':'▫️'}</span>
+        <span title="Comidas" class="mono" style="font-size:12px;">${l.eatingCount||0}/4</span>
+        <span title="Agua" class="mono" style="font-size:12px;">💧${l.water||0}b</span>
+        <span title="Casa">${(l.houseAM&&l.houseNight)?'🏡':'▫️'}</span>
+      </span>
+    </div>`;
+  }).join("");
+}
+function renderLogros(){
+  const trainDays = Object.values(state.dailyLogs).filter(l=>l.training).length;
+  const houseDays = Object.values(state.dailyLogs).filter(l=>l.houseAM && l.houseNight).length;
+  const waterTotal = Object.values(state.dailyLogs).reduce((s,l)=>s+(l.water||0),0);
+  const badges = [
+    {ic:"🥉", t:"7 días entrenando", on: trainDays>=7},
+    {ic:"🥈", t:"30 días sin faltar", on: state.streak>=30},
+    {ic:"🥇", t:"100 litros de agua", on: (waterTotal*0.9)>=100},
+    {ic:"🏡", t:"Casa impecable 30 días", on: houseDays>=30}
+  ];
+  let html = `<div class="section">
+    <div class="section-title">Logros</div>
+    <div class="section-sub">Racha actual: <b>${state.streak} días</b></div>
+    <div class="badge-grid">
+      ${badges.map(b=>`<div class="badge ${b.on?'unlocked':''}"><div class="ic">${b.ic}</div><div class="t">${b.t}</div></div>`).join("")}
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <div class="card-title">📜 Historial</div>
+      <div class="note" style="margin-bottom:10px;">Cada día que pasa queda guardado acá solo, no hay que hacer nada.</div>
+      ${renderHistoryRows()}
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <div class="card-title">🎁 Recompensas</div>
+      <div class="note" style="margin-bottom:10px;">No es un premio por portarte bien — es una forma de celebrar lo que ya lograste.</div>
+      ${REWARDS.map(r=>{
+        const claimed = state.claimedRewards.includes(r);
+        return `<div class="list-item"><span>${claimed?'✅ ':''}${r}</span><button class="btn small ${claimed?'secondary':''}" onclick="claimReward('${r.replace(/'/g,"\\'")}')">${claimed?'Elegida':'Elegir'}</button></div>`;
+      }).join("")}
+    </div>
+  </div>`;
+  document.getElementById('content').innerHTML = html;
+}
+function claimReward(r){
+  if(!state.claimedRewards.includes(r)){ state.claimedRewards.push(r); toast("✨ Disfrutala"); }
+  else { state.claimedRewards = state.claimedRewards.filter(x=>x!==r); }
+  saveState(); renderLogros();
+}
+
+/* ============================= TAB: MAS ============================= */
+let masSub = "brain";
+function renderMas(){
+  let html = `<div class="section">
+    <div class="section-title">Más</div>
+    <div class="subtabs">
+      <button class="pill ${masSub==='brain'?'active':''}" onclick="setMasSub('brain')">🧠 Descargar</button>
+      <button class="pill ${masSub==='gifts'?'active':''}" onclick="setMasSub('gifts')">🎁 Regalos</button>
+      <button class="pill ${masSub==='ideas'?'active':''}" onclick="setMasSub('ideas')">💡 Ideas casa</button>
+    </div>`;
+
+  if(masSub==='brain'){
+    html += `<div class="card"><div class="card-title">🧠 Descargar la cabeza</div>
+      <textarea id="brainInput" placeholder="Escribí cualquier cosa que se te ocurra…"></textarea>
+      <button class="btn block" style="margin-top:8px;" onclick="addBrain()">Guardar</button>
+      </div>`;
+    if(state.brainDump.length){
+      html += `<div class="card"><div class="card-title">📋 Pendientes</div>
+        ${state.brainDump.map((n,i)=>`
+          <div class="list-item">
+            <span>${esc(n)}</span>
+            <span style="display:flex;gap:4px;">
+              <button class="btn small secondary" onclick="brainToICS(${i})">📅</button>
+              <button class="del" onclick="delBrain(${i})">×</button>
+            </span>
+          </div>`).join("")}
+        <div class="note">📅 descarga un evento (.ics) para importar al Calendario de tu iPhone.</div>
+      </div>`;
+    } else {
+      html += `<div class="empty"><span class="big">🧠</span>Nada guardado todavía.</div>`;
+    }
+  } else if(masSub==='gifts'){
+    html += `<div class="card"><div class="card-title">🎁 Ideas de regalos</div>
+      <input type="text" id="giftPerson" placeholder="¿Para quién?" style="margin-bottom:8px;">
+      <input type="text" id="giftIdea" placeholder="Idea">
+      <button class="btn block" style="margin-top:8px;" onclick="addGift()">Guardar</button>
+      </div>`;
+    html += `<div class="card"><div class="card-title">📋 Guardadas</div>
+      ${state.giftIdeas.length ? state.giftIdeas.map((g,i)=>`
+        <div class="list-item"><span><b>${esc(g.person)}</b> — ${esc(g.idea)}</span><button class="del" onclick="delGift(${i})">×</button></div>
+      `).join("") : `<div class="empty">Nada guardado todavía.</div>`}
+      </div>`;
+  } else if(masSub==='ideas'){
+    html += `<div class="card"><div class="card-title">💡 Ideas para la casa</div>
+      <input type="text" id="ideaText" placeholder="Idea" style="margin-bottom:8px;">
+      <div class="grid2">
+        <input type="text" id="ideaCost" placeholder="Costo estimado">
+        <select id="ideaPrio"><option>Baja</option><option selected>Media</option><option>Alta</option></select>
+      </div>
+      <select id="ideaState" style="margin-top:8px;"><option>Idea</option><option>En curso</option><option>Terminada</option></select>
+      <button class="btn block" style="margin-top:8px;" onclick="addIdea()">Guardar</button>
+      </div>`;
+    html += `<div class="card"><div class="card-title">📋 Guardadas</div>
+      ${state.homeIdeas.length ? state.homeIdeas.map((it,i)=>`
+        <div class="list-item"><span><b>${esc(it.text)}</b><br><span style="font-size:11.5px;color:var(--ink-soft);">${esc(it.cost||'—')} · Prioridad ${it.prio} · ${it.state}</span></span><button class="del" onclick="delIdea(${i})">×</button></div>
+      `).join("") : `<div class="empty">Nada guardado todavía.</div>`}
+      </div>`;
+  }
+  html += `</div>`;
+  document.getElementById('content').innerHTML = html;
+}
+function setMasSub(s){ masSub=s; renderMas(); }
+function addBrain(){
+  const v = document.getElementById('brainInput').value.trim();
+  if(!v) return;
+  state.brainDump.push(v);
+  document.getElementById('brainInput').value = "";
+  saveState(); renderMas(); toast("Guardado");
+}
+function delBrain(i){ state.brainDump.splice(i,1); saveState(); renderMas(); }
+function brainToICS(i){ downloadICS(state.brainDump[i], todayKey(), "09:00"); }
+function addGift(){
+  const person = document.getElementById('giftPerson').value.trim();
+  const idea = document.getElementById('giftIdea').value.trim();
+  if(!person || !idea) return;
+  state.giftIdeas.push({person, idea});
+  saveState(); renderMas(); toast("Guardado");
+}
+function delGift(i){ state.giftIdeas.splice(i,1); saveState(); renderMas(); }
+function addIdea(){
+  const text = document.getElementById('ideaText').value.trim();
+  if(!text) return;
+  const cost = document.getElementById('ideaCost').value.trim();
+  const prio = document.getElementById('ideaPrio').value;
+  const st = document.getElementById('ideaState').value;
+  state.homeIdeas.push({text,cost,prio,state:st});
+  saveState(); renderMas(); toast("Guardado");
+}
+function delIdea(i){ state.homeIdeas.splice(i,1); saveState(); renderMas(); }
+
+/* ============================= NAV / INIT ============================= */
+const RENDERERS = {hoy:renderHoy, semana:renderSemana, super:renderSuper, casa:renderCasa, logros:renderLogros, mas:renderMas};
+function setActiveTab(tab){
+  activeTab = tab;
+  document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  RENDERERS[tab]();
+}
+document.querySelectorAll('.navbtn').forEach(b=>b.addEventListener('click', ()=>setActiveTab(b.dataset.tab)));
+
+(async function init(){
+  window.addEventListener('error', function(){
+    const c = document.getElementById('content');
+    if(c && !c.innerHTML.trim()){
+      c.innerHTML = '<div class="section"><div class="empty"><span class="big">😕</span>Algo no cargó bien. Cerrá esta pantalla y volvé a abrirla.</div></div>';
+    }
+  });
+  await loadState();
+  try{ renderHeader(); }catch(e){ console.error(e); }
+  try{ setActiveTab('hoy'); }catch(e){ console.error(e); document.getElementById('content').innerHTML = '<div class="section"><div class="empty"><span class="big">😕</span>Algo no cargó bien. Cerrá esta pantalla y volvé a abrirla.</div></div>'; }
+  setInterval(()=>{ try{ renderHeader(); }catch(e){} }, 60000);
+})();
+</script>
+</body>
+</html>
